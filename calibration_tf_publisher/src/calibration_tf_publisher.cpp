@@ -85,8 +85,6 @@ int main(int argc, char ** argv) {
   //Initialize ROS
   ros::init(argc, argv, "calibration_tf_publisher", ros::init_options::AnonymousName);
 
-  printf("Have %d arguments\n", argc);
-
   if (argc == 11) {
     ros::Duration sleeper(atof(argv[10]) / 1000.0);
 
@@ -160,8 +158,8 @@ int main(int argc, char ** argv) {
       if(tf_data.hasMember("period"))
         period = (double)tf_data["period"];
 
-      ros::Duration sleeper(period);
-      ROS_INFO_STREAM("Duration is " << sleeper << " msecs.");
+      ros::Duration sleeper(period/1000.0);
+      ROS_INFO_STREAM("Duration is " << sleeper << " secs.");
       TransformSender tf_sender(tx, ty, tz, rx, ry, rz, rw,
                                 ros::Time() + sleeper, //Future dating to allow slower sending w/o timeout
                                 frame_id, child_frame_id);
