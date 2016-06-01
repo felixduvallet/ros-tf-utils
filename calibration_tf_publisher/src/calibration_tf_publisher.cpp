@@ -83,7 +83,7 @@ bool validateXmlRpcTf(XmlRpc::XmlRpcValue tf_data) {
 
 int main(int argc, char ** argv) {
   //Initialize ROS
-  ros::init(argc, argv, "static_transform_publisher", ros::init_options::AnonymousName);
+  ros::init(argc, argv, "calibration_tf_publisher", ros::init_options::AnonymousName);
 
   printf("Have %d arguments\n", argc);
 
@@ -148,22 +148,35 @@ int main(int argc, char ** argv) {
       const double rz = (double) tf_data["transform"]["rotation"]["z"];
       const double rw = (double) tf_data["transform"]["rotation"]["z"];
 
-      const std::string child_frame = (std::string) tf_data["child_frame_id"];
-      const std::string frame = (std::string) tf_data["header"]["frame_id"];
+      const std::string child_frame_id = (std::string) tf_data["child_frame_id"];
+      const std::string frame_id = (std::string) tf_data["header"]["frame_id"];
 
-      ROS_INFO("TF [%f %f %f ] [%f %f %f %f] %s %s", tx, ty, tz, rx, ry, rz, rw, child_frame.c_str(), frame.c_str());
+      ROS_INFO("TF [%f %f %f ] [%f %f %f %f] %s %s", tx, ty, tz, rx, ry, rz, rw, child_frame_id.c_str(), frame_id.c_str());
+
+      if (frame_id == child_frame_id)
+        ROS_FATAL("target_frame and source frame are the same (%s, %s) this cannot work", argv[7], argv[8]);
+
+      ros::Duration sleeper(atof(argv[9]) / 1000.0);
+      TransformSender tf_sender(tx, ty, tz, rx, ry, rz, rw,
+                                ros::Time() + sleeper, //Future dating to allow slower sending w/o timeout
+                                frame_id, child_frame_id);
+      while (tf_sender.node_.ok()) {
+        tf_sender.send(ros::Time::now() + sleeper);
+        ROS_DEBUG("Sending transform from %s with parent %s\n", argv[7], argv[8]);
+        sleeper.sleep();
+      }
     }
   }
   else
   {
     printf("A command line utility for manually sending a transform.\n");
     printf("It will periodicaly republish the given transform. \n");
-    printf("Usage: static_transform_publisher x y z yaw pitch roll frame_id child_frame_id  period(milliseconds) \n");
+    printf("Usage: calibration_tf_publisher x y z yaw pitch roll frame_id child_frame_id  period(milliseconds) \n");
     printf("OR \n");
-    printf("Usage: static_transform_publisher x y z qx qy qz qw frame_id child_frame_id  period(milliseconds) \n");
+    printf("Usage: calibration_tf_publisher x y z qx qy qz qw frame_id child_frame_id  period(milliseconds) \n");
     printf("\nThis transform is the transform of the coordinate frame from frame_id into the coordinate frame \n");
     printf("of the child_frame_id.  \n");
-    ROS_ERROR("static_transform_publisher exited due to not having the right number of arguments");
+    ROS_ERROR("calibration_tf_publisher exited due to not having the right number of arguments");
     return -1;
   }
 
