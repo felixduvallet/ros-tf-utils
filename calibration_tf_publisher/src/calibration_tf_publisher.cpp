@@ -28,103 +28,92 @@
  */
 
 #include <cstdio>
-#include "tf/transform_broadcaster.h"
-
-class TransformSender
-{
-public:
-  ros::NodeHandle node_;
-  //constructor
-  TransformSender(double x, double y, double z, double yaw, double pitch, double roll, ros::Time time, const std::string& frame_id, const std::string& child_frame_id)
-  {
-    tf::Quaternion q;
-    q.setRPY(roll, pitch,yaw);
-    transform_ = tf::StampedTransform(tf::Transform(q, tf::Vector3(x,y,z)), time, frame_id, child_frame_id );
-  };
-  TransformSender(double x, double y, double z, double qx, double qy, double qz, double qw, ros::Time time, const std::string& frame_id, const std::string& child_frame_id) :
-    transform_(tf::Transform(tf::Quaternion(qx,qy,qz,qw), tf::Vector3(x,y,z)), time, frame_id, child_frame_id){};
-  //Clean up ros connections
-  ~TransformSender() { }
-
-  //A pointer to the rosTFServer class
-  tf::TransformBroadcaster broadcaster;
-
-
-
-  // A function to call to send data periodically
-  void send (ros::Time time) {
-    transform_.stamp_ = time;
-    broadcaster.sendTransform(transform_);
-  };
-
-private:
-  tf::StampedTransform transform_;
-
-};
-
+#include <tf2/LinearMath/Quaternion.h>
+#include "tf2_ros/static_transform_broadcaster.h"
 
 bool validateXmlRpcTf(XmlRpc::XmlRpcValue tf_data) {
   // Validate a TF stored in XML RPC format: ensures the appropriate fields
   // exist. Note this does not check data types.
   return tf_data.hasMember("child_frame_id") &&
-          tf_data.hasMember("header") &&
-          tf_data["header"].hasMember("frame_id") &&
-          tf_data.hasMember("transform") &&
-          tf_data["transform"].hasMember("translation") &&
-          tf_data["transform"]["translation"].hasMember("x") &&
-          tf_data["transform"]["translation"].hasMember("y") &&
-          tf_data["transform"]["translation"].hasMember("z") &&
-          tf_data["transform"].hasMember("rotation") &&
-          tf_data["transform"]["rotation"].hasMember("x") &&
-          tf_data["transform"]["rotation"].hasMember("y") &&
-          tf_data["transform"]["rotation"].hasMember("z") &&
-          tf_data["transform"]["rotation"].hasMember("w");
+         tf_data.hasMember("header") &&
+         tf_data["header"].hasMember("frame_id") &&
+         tf_data.hasMember("transform") &&
+         tf_data["transform"].hasMember("translation") &&
+         tf_data["transform"]["translation"].hasMember("x") &&
+         tf_data["transform"]["translation"].hasMember("y") &&
+         tf_data["transform"]["translation"].hasMember("z") &&
+         tf_data["transform"].hasMember("rotation") &&
+         tf_data["transform"]["rotation"].hasMember("x") &&
+         tf_data["transform"]["rotation"].hasMember("y") &&
+         tf_data["transform"]["rotation"].hasMember("z") &&
+         tf_data["transform"]["rotation"].hasMember("w");
 };
 
-int main(int argc, char ** argv) {
+int main(int argc, char ** argv)
+{
   //Initialize ROS
-  ros::init(argc, argv, "calibration_tf_publisher", ros::init_options::AnonymousName);
+  ros::init(argc, argv,"calibration_transform_publisher", ros::init_options::AnonymousName);
+  tf2_ros::StaticTransformBroadcaster broadcaster;
 
-  if (argc == 11) {
-    ros::Duration sleeper(atof(argv[10]) / 1000.0);
+  ROS_INFO_STREAM("Time: " << ros::Time::now());
+
+  if(argc == 10)
+  {
 
     if (strcmp(argv[8], argv[9]) == 0)
+    {
       ROS_FATAL("target_frame and source frame are the same (%s, %s) this cannot work", argv[8], argv[9]);
-
-    TransformSender tf_sender(atof(argv[1]), atof(argv[2]), atof(argv[3]),
-                              atof(argv[4]), atof(argv[5]), atof(argv[6]), atof(argv[7]),
-                              ros::Time() + sleeper, //Future dating to allow slower sending w/o timeout
-                              argv[8], argv[9]);
-
-
-    while (tf_sender.node_.ok()) {
-      tf_sender.send(ros::Time::now() + sleeper);
-      ROS_DEBUG("Sending transform from %s with parent %s\n", argv[8], argv[9]);
-      sleeper.sleep();
+      return 1;
     }
 
-    return 0;
+    geometry_msgs::TransformStamped msg;
+    msg.transform.translation.x = atof(argv[1]);
+    msg.transform.translation.y = atof(argv[2]);
+    msg.transform.translation.z = atof(argv[3]);
+    msg.transform.rotation.x = atof(argv[4]);
+    msg.transform.rotation.y = atof(argv[5]);
+    msg.transform.rotation.z = atof(argv[6]);
+    msg.transform.rotation.w = atof(argv[7]);
+    msg.header.stamp = ros::Time::now();
+    msg.header.frame_id = argv[8];
+    msg.child_frame_id = argv[9];
+
+
+
+  broadcaster.sendTransform(msg);
+  ROS_INFO("Spinning until killed publishing %s to %s", msg.header.frame_id.c_str(), msg.child_frame_id.c_str());
+  ros::spin();
+
+  return 0;
   }
-  else if (argc == 10) {
-    ros::Duration sleeper(atof(argv[9]) / 1000.0);
-
+  else if (argc == 9)
+  {
     if (strcmp(argv[7], argv[8]) == 0)
+    {
       ROS_FATAL("target_frame and source frame are the same (%s, %s) this cannot work", argv[7], argv[8]);
-
-    TransformSender tf_sender(atof(argv[1]), atof(argv[2]), atof(argv[3]),
-                              atof(argv[4]), atof(argv[5]), atof(argv[6]),
-                              ros::Time() + sleeper, //Future dating to allow slower sending w/o timeout
-                              argv[7], argv[8]);
-
-
-    while (tf_sender.node_.ok()) {
-      tf_sender.send(ros::Time::now() + sleeper);
-      ROS_DEBUG("Sending transform from %s with parent %s\n", argv[7], argv[8]);
-      sleeper.sleep();
+      return 1;
     }
 
-    return 0;
+    geometry_msgs::TransformStamped msg;
+    msg.transform.translation.x = atof(argv[1]);
+    msg.transform.translation.y = atof(argv[2]);
+    msg.transform.translation.z = atof(argv[3]);
 
+    tf2::Quaternion quat;
+    quat.setRPY(atof(argv[6]), atof(argv[5]), atof(argv[4]));
+    msg.transform.rotation.x = quat.x();
+    msg.transform.rotation.y = quat.y();
+    msg.transform.rotation.z = quat.z();
+    msg.transform.rotation.w = quat.w();
+
+    msg.header.stamp = ros::Time::now();
+    msg.header.frame_id = argv[7];
+    msg.child_frame_id = argv[8];
+
+    broadcaster.sendTransform(msg);
+    ROS_INFO("Spinning until killed publishing %s to %s", msg.header.frame_id.c_str(), msg.child_frame_id.c_str());
+    ros::spin();
+    return 0;
   }
   else if (argc == 2) {
     std::string param_name = argv[1];
@@ -148,40 +137,45 @@ int main(int argc, char ** argv) {
 
       const std::string child_frame_id = (std::string) tf_data["child_frame_id"];
       const std::string frame_id = (std::string) tf_data["header"]["frame_id"];
-
-      ROS_INFO("TF [%f %f %f ] [%f %f %f %f] %s %s", tx, ty, tz, rx, ry, rz, rw, child_frame_id.c_str(), frame_id.c_str());
-
       if (frame_id == child_frame_id)
         ROS_FATAL("target_frame and source frame are the same (%s, %s) this cannot work", argv[7], argv[8]);
 
-      double period = 10.0;  // Default is 10 msec period.
-      if(tf_data.hasMember("period"))
-        period = (double)tf_data["period"];
+      ROS_INFO("TF [%f %f %f ] [%f %f %f %f] %s %s", tx, ty, tz, rx, ry, rz, rw, child_frame_id.c_str(), frame_id.c_str());
 
-      ros::Duration sleeper(period/1000.0);
-      ROS_INFO_STREAM("Duration is " << sleeper << " secs.");
-      TransformSender tf_sender(tx, ty, tz, rx, ry, rz, rw,
-                                ros::Time() + sleeper, //Future dating to allow slower sending w/o timeout
-                                frame_id, child_frame_id);
-      while (tf_sender.node_.ok()) {
-        tf_sender.send(ros::Time::now() + sleeper);
-        ROS_DEBUG("Sending transform from %s with parent %s\n", argv[7], argv[8]);
-        sleeper.sleep();
-      }
+      geometry_msgs::TransformStamped msg;
+      msg.transform.translation.x = tx;
+      msg.transform.translation.y = ty;
+      msg.transform.translation.z = tz;
+      msg.transform.rotation.x = rx;
+      msg.transform.rotation.y = ry;
+      msg.transform.rotation.z = rz;
+      msg.transform.rotation.w = rw;
+      msg.header.stamp = ros::Time::now();
+      msg.header.frame_id = frame_id;
+      msg.child_frame_id = child_frame_id;
+
+      ROS_INFO_STREAM("Time: " << msg.header.stamp);
+
+      broadcaster.sendTransform(msg);
+      ROS_INFO("Spinning until killed publishing %s to %s", msg.header.frame_id.c_str(), msg.child_frame_id.c_str());
+      ros::spin();
+      return 0;
     }
   }
   else
   {
     printf("A command line utility for manually sending a transform.\n");
-    printf("It will periodicaly republish the given transform. \n");
-    printf("Usage: calibration_tf_publisher x y z yaw pitch roll frame_id child_frame_id  period(milliseconds) \n");
+    //printf("It will periodicaly republish the given transform. \n");
+    printf("Usage: static_transform_publisher x y z qx qy qz qw frame_id child_frame_id \n");
     printf("OR \n");
-    printf("Usage: calibration_tf_publisher x y z qx qy qz qw frame_id child_frame_id  period(milliseconds) \n");
+    printf("Usage: static_transform_publisher x y z yaw pitch roll frame_id child_frame_id \n");
     printf("\nThis transform is the transform of the coordinate frame from frame_id into the coordinate frame \n");
     printf("of the child_frame_id.  \n");
-    ROS_ERROR("calibration_tf_publisher exited due to not having the right number of arguments");
+    ROS_ERROR("static_transform_publisher exited due to not having the right number of arguments");
     return -1;
   }
 
 
 };
+
+
