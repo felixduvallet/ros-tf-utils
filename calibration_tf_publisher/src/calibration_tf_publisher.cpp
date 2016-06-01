@@ -156,7 +156,12 @@ int main(int argc, char ** argv) {
       if (frame_id == child_frame_id)
         ROS_FATAL("target_frame and source frame are the same (%s, %s) this cannot work", argv[7], argv[8]);
 
-      ros::Duration sleeper(atof(argv[9]) / 1000.0);
+      double period = 10.0;  // Default is 10 msec period.
+      if(tf_data.hasMember("period"))
+        period = (double)tf_data["period"];
+
+      ros::Duration sleeper(period);
+      ROS_INFO_STREAM("Duration is " << sleeper << " msecs.");
       TransformSender tf_sender(tx, ty, tz, rx, ry, rz, rw,
                                 ros::Time() + sleeper, //Future dating to allow slower sending w/o timeout
                                 frame_id, child_frame_id);

@@ -16,3 +16,6 @@ The data in the `/calibration_transform` parameter must be a valid TF, e.g.:
      transform:
        rotation: {w: 0.38720459109, x: -0.62908825919, y: 0.210952809338, z: 0.640171445021}
        translation: {x: 0.76, y: 0.5, z: 1.0}
+
+This yaml can also contain a `period: NN` element, indicating the publishing
+period in milliseconds (otherwise the default is 10 msecs).
