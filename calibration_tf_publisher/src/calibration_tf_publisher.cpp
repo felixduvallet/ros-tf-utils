@@ -133,7 +133,7 @@ int main(int argc, char ** argv)
       const double rx = (double) tf_data["transform"]["rotation"]["x"];
       const double ry = (double) tf_data["transform"]["rotation"]["y"];
       const double rz = (double) tf_data["transform"]["rotation"]["z"];
-      const double rw = (double) tf_data["transform"]["rotation"]["z"];
+      const double rw = (double) tf_data["transform"]["rotation"]["w"];
 
       const std::string child_frame_id = (std::string) tf_data["child_frame_id"];
       const std::string frame_id = (std::string) tf_data["header"]["frame_id"];
@@ -177,5 +177,3 @@ int main(int argc, char ** argv)
 
 
 };
-
-
