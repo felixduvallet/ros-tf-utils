@@ -2,7 +2,7 @@
 import unittest
 
 from pose_to_tf.pose_to_tf_rebroadcaster import PoseToTFRebroadcaster
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import Pose
 
 
 class TestCase(unittest.TestCase):
@@ -11,19 +11,19 @@ class TestCase(unittest.TestCase):
         self.assertIsNotNone(broad)
 
     def test_make_pose(self):
-        p = PoseToTFRebroadcaster.make_stamped_pose([0, 1, 2], time=1.0)
+        p = PoseToTFRebroadcaster.make_stamped_pose([0, 1, 2])
         self.assertIsNotNone(p)
-        self.assertEqual(0.0, p.pose.position.x)
-        self.assertEqual(1.0, p.pose.position.y)
-        self.assertEqual(2.0, p.pose.position.z)
+        self.assertEqual(0.0, p.position.x)
+        self.assertEqual(1.0, p.position.y)
+        self.assertEqual(2.0, p.position.z)
 
     def test_make_pose_empty(self):
         p = PoseToTFRebroadcaster.make_stamped_pose([])
         self.assertIsNone(p)
 
     def test_pose_to_tf(self):
-        pose = PoseStamped()
-        pose.pose.position.x = 1.0
+        pose = Pose()
+        pose.position.x = 1.0
 
         tf = PoseToTFRebroadcaster.pose_to_tf(pose, "child", "parent",
                                               time=1.0)

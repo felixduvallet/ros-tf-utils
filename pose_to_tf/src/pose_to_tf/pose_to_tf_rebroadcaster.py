@@ -20,7 +20,7 @@ import yaml
 
 import rospy
 import tf2_ros as tf2
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import Pose
 from geometry_msgs.msg import TransformStamped
 
 
@@ -70,7 +70,7 @@ class PoseToTFRebroadcaster(object):
             # Create a new subscriber callback that receives the frame name when
             # it gets called. That subscriber will store the latest pose.
             _ = rospy.Subscriber(
-                topic, PoseStamped, self._pose_callback, frame_name)
+                topic, Pose, self._pose_callback, frame_name)
             pose_data[frame_name] = {'parent_frame': parent_frame,
                                      'pose': initial_pose}
             rospy.logdebug(('Created TF rebroadcaster for pose topic [{}] '
@@ -97,8 +97,8 @@ class PoseToTFRebroadcaster(object):
         tf.header.stamp = time
         tf.header.frame_id = parent_frame
 
-        tf.transform.translation = pose.pose.position
-        tf.transform.rotation = pose.pose.orientation
+        tf.transform.translation = pose.position
+        tf.transform.rotation = pose.orientation
 
         return tf
 
@@ -117,7 +117,7 @@ class PoseToTFRebroadcaster(object):
                 frame_name))
 
     @classmethod
-    def make_stamped_pose(cls, position, time=None):
+    def make_stamped_pose(cls, position):
         """
         Parse a list of positions (that could be None or empty) into a
         PoseStamped ROS message.
@@ -127,14 +127,12 @@ class PoseToTFRebroadcaster(object):
         """
         initial_pose = None
         if position and len(position) == 3:
-            initial_pose = PoseStamped()
-            initial_pose.pose.position.x = position[0]
-            initial_pose.pose.position.y = position[1]
-            initial_pose.pose.position.z = position[2]
-            initial_pose.pose.orientation.w = 1.0  # init quaternion properly.
-            if time is None:
-                time = rospy.Time.now()
-            initial_pose.header.stamp = time
+            initial_pose = Pose()
+            initial_pose.position.x = position[0]
+            initial_pose.position.y = position[1]
+            initial_pose.position.z = position[2]
+            initial_pose.orientation.w = 1.0  # init quaternion properly.
+
         return initial_pose
 
     def spin(self):
