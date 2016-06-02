@@ -11,9 +11,13 @@ modifications](https://github.com/ros/geometry2/pull/179).
 Usage:
 
     # Load the calibration TF into the param server.
-    rosparam load example_calibration.yaml /calibration_transform
+    rosparam load launch/example_calibration.yaml /calibration_transform
     # Start the TF publisher with this parameter name.
     rosrun calibration_tf_publisher calibration_tf_publisher /calibration_transform
+
+Alternatively:
+
+    roslaunch calibration_tf_publisher calibration_tf_publisher.launch calibration_file:=launch/example_calibration.yaml
 
 The data in the calibration parameter must be a valid TF, with a child frame,
 parent frame, and transform (translation and rotation).

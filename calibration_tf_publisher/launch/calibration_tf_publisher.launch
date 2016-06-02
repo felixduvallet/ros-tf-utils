@@ -1,0 +1,14 @@
+<launch>
+
+  <!-- You must specify the calibration file where the TF is stored. -->
+  <arg name="calibration_file" />
+
+  <rosparam param="robot_calibration"
+            file="$(arg calibration_file)" />
+  <node name="calibration_tf_publisher"
+        pkg="calibration_tf_publisher"
+        type="calibration_tf_publisher"
+        output="screen"
+        args="robot_calibration" />
+
+</launch>

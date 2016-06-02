@@ -1,8 +1,4 @@
 header:
-  seq: 0
-  stamp:
-    secs: 1619
-    nsecs: 601000000
   frame_id: world
 child_frame_id: robot_calibration
 transform:
