@@ -1,21 +1,19 @@
 # Calibration TF publisher
 
-This is essentially the static_transform_publisher with one additional feature:
-you can pass a ROS parameter that contains a calibration TF.
+Store your calibration TF as a yaml file and have this node publish it as a
+static TF by loading it from the parameter server.
+
+This is exactly the static_transform_publisher that exists in the ROS
+[geometry2](https://github.com/ros/geometry2) package, with [my
+modifications](https://github.com/ros/geometry2/pull/179).
+
 
 Usage:
 
+    # Load the calibration TF into the param server.
+    rosparam load example_calibration.yaml /calibration_transform
+    # Start the TF publisher with this parameter name.
     rosrun calibration_tf_publisher calibration_tf_publisher /calibration_transform
 
-The data in the `/calibration_transform` parameter must be a valid TF, e.g.:
-
-     $ rosparam get /calibration_transform/
-     child_frame_id: robot_calibration
-     header:
-       frame_id: world
-     transform:
-       rotation: {w: 0.38720459109, x: -0.62908825919, y: 0.210952809338, z: 0.640171445021}
-       translation: {x: 0.76, y: 0.5, z: 1.0}
-
-This yaml can also contain a `period: NN` element, indicating the publishing
-period in milliseconds (otherwise the default is 10 msecs).
+The data in the calibration parameter must be a valid TF, with a child frame,
+parent frame, and transform (translation and rotation).
