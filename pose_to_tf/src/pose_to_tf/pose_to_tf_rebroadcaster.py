@@ -113,8 +113,8 @@ class PoseToTFRebroadcaster(object):
             transform = self.pose_to_tf(
                 pose_data['pose'], frame_name, pose_data['parent_frame'])
             self._tf_broadcaster.sendTransform(transform)
-            rospy.loginfo('Published transform for frame {}.'.format(frame_name))
-
+            rospy.loginfo('Published transform for frame {}.'.format(
+                frame_name))
 
     @classmethod
     def make_stamped_pose(cls, position, time=None):
@@ -131,7 +131,7 @@ class PoseToTFRebroadcaster(object):
             initial_pose.pose.position.x = position[0]
             initial_pose.pose.position.y = position[1]
             initial_pose.pose.position.z = position[2]
-            initial_pose.pose.orientation.w = 1.0  # Initialize quaternion properly.
+            initial_pose.pose.orientation.w = 1.0  # init quaternion properly.
             if time is None:
                 time = rospy.Time.now()
             initial_pose.header.stamp = time
@@ -148,7 +148,6 @@ class PoseToTFRebroadcaster(object):
 
 
 def load_config(config_file):
-    config = {}
     with open(config_file, 'r') as f:
         config = yaml.load(f)
 
