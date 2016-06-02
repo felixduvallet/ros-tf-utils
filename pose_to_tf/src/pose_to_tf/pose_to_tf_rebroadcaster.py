@@ -19,8 +19,9 @@ import sys
 import yaml
 
 import rospy
-import tf
+import tf2_ros as tf2
 from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import TransformStamped
 
 
 class PoseToTFRebroadcaster(object):
@@ -40,7 +41,7 @@ class PoseToTFRebroadcaster(object):
         self._default_parent_frame = 'world'
 
         # One TF broadcaster
-        self._tf_broadcaster = tf.TransformBroadcaster()
+        self._tf_broadcaster = tf2.TransformBroadcaster()
 
         # All the current pose data. Map from frame_name -> PoseStamped.
         self._pose_data = self._init_subscribers()
@@ -83,20 +84,23 @@ class PoseToTFRebroadcaster(object):
         self._pose_data[frame_name]['pose'] = data
 
     @classmethod
-    def pose_to_tf(cls, pose, frame_name, parent_frame):
+    def pose_to_tf(cls, pose, frame_name, parent_frame, time=None):
         """
         Generate a TF from a given pose, frame, and parent.
 
         """
         assert pose is not None, 'Cannot have None for pose.'
-        transform = (
-            (pose.pose.position.x, pose.pose.position.y, pose.pose.position.z),
-            (pose.pose.orientation.x, pose.pose.orientation.y,
-             pose.pose.orientation.z, pose.pose.orientation.w),
-            rospy.Time.now(),
-            frame_name,
-            parent_frame)
-        return transform
+        tf = TransformStamped()
+        tf.child_frame_id = frame_name
+        if time is None:
+            time = rospy.Time.now()
+        tf.header.stamp = time
+        tf.header.frame_id = parent_frame
+
+        tf.transform.translation = pose.pose.position
+        tf.transform.rotation = pose.pose.orientation
+
+        return tf
 
     def publish_transforms(self):
         """
@@ -108,12 +112,12 @@ class PoseToTFRebroadcaster(object):
                 continue
             transform = self.pose_to_tf(
                 pose_data['pose'], frame_name, pose_data['parent_frame'])
-            self._tf_broadcaster.sendTransform(*transform)
+            self._tf_broadcaster.sendTransform(transform)
             rospy.loginfo('Published transform for frame {}.'.format(frame_name))
 
 
     @classmethod
-    def make_stamped_pose(cls, position):
+    def make_stamped_pose(cls, position, time=None):
         """
         Parse a list of positions (that could be None or empty) into a
         PoseStamped ROS message.
@@ -128,7 +132,9 @@ class PoseToTFRebroadcaster(object):
             initial_pose.pose.position.y = position[1]
             initial_pose.pose.position.z = position[2]
             initial_pose.pose.orientation.w = 1.0  # Initialize quaternion properly.
-            initial_pose.header.stamp = rospy.Time.now()
+            if time is None:
+                time = rospy.Time.now()
+            initial_pose.header.stamp = time
         return initial_pose
 
     def spin(self):
