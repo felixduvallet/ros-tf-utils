@@ -113,7 +113,7 @@ class PoseToTFRebroadcaster(object):
             transform = self.pose_to_tf(
                 pose_data['pose'], frame_name, pose_data['parent_frame'])
             self._tf_broadcaster.sendTransform(transform)
-            rospy.loginfo('Published transform for frame {}.'.format(
+            rospy.logdebug('Published transform for frame {}.'.format(
                 frame_name))
 
     @classmethod
